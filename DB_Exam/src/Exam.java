@@ -15,4 +15,43 @@ public class Exam {
     private List<ExamSession> examSessions;
 
     private String title;
+
+    public Exam() {
+    }
+
+    public Exam(String title) {
+        this.title = title;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public List<Question> getQuestions() {
+        return questions;
+    }
+
+    public void setQuestions(List<Question> questions) {
+        this.questions = questions;
+    }
+
+    public List<ExamSession> getExamSessions() {
+        return examSessions;
+    }
+
+    public void setExamSessions(List<ExamSession> examSessions) {
+        this.examSessions = examSessions;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
 }
