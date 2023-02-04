@@ -8,6 +8,7 @@ import org.hibernate.query.Query;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 
 @Entity
 public class Choice {
@@ -98,5 +99,12 @@ public class Choice {
     @Override
     public String toString() {
         return choiceText;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Choice choice)) return false;
+        return choiceText.equals(choice.choiceText);
     }
 }

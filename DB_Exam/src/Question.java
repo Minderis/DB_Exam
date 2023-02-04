@@ -6,7 +6,6 @@ import org.hibernate.Session;
 import org.hibernate.query.Query;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 
 @Entity
@@ -39,21 +38,12 @@ public class Question {
         this.points = points;
     }
 
-    public static HashSet<Question> getQuestionsByExamId(int id) {
+    public static List<Question> getQuestionsByExamId(int id) {
         try (Session session = SessionFactoryMaker.getFactory().openSession()) {
-            CriteriaBuilder cb = session.getCriteriaBuilder();
-            CriteriaQuery<Question> cr = cb.createQuery(Question.class);
-            Root<Question> root = cr.from(Question.class);
-            cr.select(root);
-            Query<Question> query = session.createQuery(cr);
-            List<Question> allResults = query.getResultList();
-            HashSet<Question> resultsForReturn = new HashSet<>();
-            for (Question question : allResults) {
-                if (question.getExam().getId() == id) {
-                    resultsForReturn.add(question);
-                }
-            }
-            return resultsForReturn;
+            String hql = "FROM Question a WHERE a.exam.id = :examId";
+            Query<Question> query = session.createQuery(hql, Question.class);
+            query.setParameter("examId", id);
+            return query.getResultList();
         }
     }
 

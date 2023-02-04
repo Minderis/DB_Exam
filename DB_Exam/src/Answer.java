@@ -35,23 +35,15 @@ public class Answer {
         this.choice = choice;
     }
 
-    public static ArrayList<Answer> getAnswersByExamSessionId(int id) {
+    public static List<Answer> getAnswersByExamSessionId(int id) {
         try (Session session = SessionFactoryMaker.getFactory().openSession()) {
-            CriteriaBuilder cb = session.getCriteriaBuilder();
-            CriteriaQuery<Answer> cr = cb.createQuery(Answer.class);
-            Root<Answer> root = cr.from(Answer.class);
-            cr.select(root);
-            Query<Answer> query = session.createQuery(cr);
-            List<Answer> allResults = query.getResultList();
-            ArrayList<Answer> resultsForReturn = new ArrayList<>();
-            for (Answer answer : allResults) {
-                if (answer.getExamSession().getId() == id) {
-                    resultsForReturn.add(answer);
-                }
-            }
-            return resultsForReturn;
+            String hql = "FROM Answer a WHERE a.examSession.id = :examSessionId";
+            Query<Answer> query = session.createQuery(hql, Answer.class);
+            query.setParameter("examSessionId", id);
+            return query.getResultList();
         }
     }
+
 
     public int getId() {
         return id;

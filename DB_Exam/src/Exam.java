@@ -1,4 +1,6 @@
 import jakarta.persistence.*;
+import org.hibernate.Session;
+import org.hibernate.query.Query;
 
 import java.util.List;
 
@@ -14,6 +16,7 @@ public class Exam {
     @OneToMany(mappedBy = "exam", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private List<ExamSession> examSessions;
 
+    @Column(unique=true)
     private String title;
 
     public Exam() {
@@ -22,6 +25,21 @@ public class Exam {
     public Exam(String title) {
         this.title = title;
     }
+
+    public static Exam getExamByTitle(String title) {
+        try (Session session = SessionFactoryMaker.getFactory().openSession()) {
+            String hql = "FROM Exam a WHERE a.title = :title";
+            Query<Exam> query = session.createQuery(hql, Exam.class);
+            query.setParameter("title", title);
+            return query.uniqueResult();
+        }
+    }
+    public static Exam getExamById(int id) {
+        try (Session session = SessionFactoryMaker.getFactory().openSession()) {
+           return session.get(Exam.class, id);
+        }
+    }
+
 
     public int getId() {
         return id;
