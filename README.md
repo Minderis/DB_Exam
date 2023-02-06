@@ -3,11 +3,11 @@ Repository for DB Exam source code
 
 # Installation
 1. Create mysql schema in your database
-2. Change hibernate.cfg.xml file with your settings (database name, username, for example: localhost:3306/your_schema_name)
-3. Add your database password to hibernate.properties file (hibernate.connection.password=your_password)
+2. Change hibernate.cfg.xml file with your settings (database name, username, for example: `localhost:3306/your_schema_name`)
+3. Add your database password to hibernate.properties file (`hibernate.connection.password=your_password`)
 4. Run the program
 
-Note: database structure and test data can be imported from provided dumps (structure_only, data_only, full) or it will be automaticaly created by entering first time "[1] - Start exam" section in app.
+Note: database structure and test data can be imported from provided dumps (structure_only, data_only, full) or it will be automaticaly created by entering first time `[1] - Start exam` section in app.
 
 # Menu tree
 ```
