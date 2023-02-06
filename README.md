@@ -10,6 +10,7 @@ Repository for DB Exam source code
 Note: database structure and test data can be imported from provided dumps (structure_only, data_only, full) or it will be automaticaly created by entering first time "[1] - Start exam" section in app.
 
 # Menu tree
+```
 Choose action:
 	[1] - Start exam
 		[x] - Exam theme title
@@ -37,4 +38,5 @@ Choose action:
 		[5] - Show choices statistics
 		[*] - return to main menu
 	[*] - Quit program
+	```
 
