@@ -1,10 +1,4 @@
 import jakarta.persistence.*;
-import jakarta.persistence.criteria.CriteriaBuilder;
-import jakarta.persistence.criteria.CriteriaQuery;
-import jakarta.persistence.criteria.Root;
-import org.hibernate.Session;
-import org.hibernate.query.Query;
-import java.util.HashSet;
 import java.util.List;
 
 @Entity
@@ -33,24 +27,6 @@ public class Choice {
         this.question = question;
         this.choiceText = choiceText;
         this.isCorrect = isCorrect;
-    }
-
-    public static HashSet<Choice> getChoicesByQuestionId(int id) {
-        try (Session session = SessionFactoryMaker.getFactory().openSession()) {
-            CriteriaBuilder cb = session.getCriteriaBuilder();
-            CriteriaQuery<Choice> cr = cb.createQuery(Choice.class);
-            Root<Choice> root = cr.from(Choice.class);
-            cr.select(root);
-            Query<Choice> query = session.createQuery(cr);
-            List<Choice> allResults = query.getResultList();
-            HashSet<Choice> resultsForReturn = new HashSet<>();
-            for (Choice choice : allResults) {
-                if (choice.getQuestion().getId() == id) {
-                    resultsForReturn.add(choice);
-                }
-            }
-            return resultsForReturn;
-        }
     }
 
     public int getId() {

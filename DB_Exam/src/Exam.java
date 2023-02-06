@@ -41,13 +41,6 @@ public class Exam {
         }
     }
 
-    public static Exam getExamById(int id) {
-        try (Session session = SessionFactoryMaker.getFactory().openSession()) {
-           return session.get(Exam.class, id);
-        }
-    }
-
-
     public int getId() {
         return id;
     }
