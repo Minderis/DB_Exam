@@ -128,10 +128,14 @@ public class Main {
                 List<Question> questions = examSession.getExam().getQuestions();
                 Collections.shuffle(questions);
                 collectAnswers(questions, sc, examSession);
+                int rightAnswers = getAmountOfRightAnswers(examSession);
+                int possiblePoints = getAllPossiblePoints(examSession);
                 calculateAndAddTotalScoresToExamSession(examSession);
                 System.out.println("Exam is done!");
-                System.out.printf("%s %s you collected in total %d point(s) out of %d\n", name, surname,
-                        examSession.getScore(), questions.size());
+                System.out.printf("%s %s you collected in total %d point(s) out of %d possible.\n", name, surname,
+                        examSession.getScore(), possiblePoints);
+                System.out.printf("Your correct answers are %d out of %d\n",
+                        rightAnswers, questions.size());
             }
         }
     }
@@ -141,7 +145,7 @@ public class Main {
         int counter = 0;
         for (Answer answer : answers) {
             if (answer.getChoice().isCorrect()) {
-                counter++;
+                counter = counter + answer.getQuestion().getPoints();
             }
         }
         examSession.setScore(counter);
@@ -150,6 +154,26 @@ public class Main {
             session.merge(examSession);
             session.getTransaction().commit();
         }
+    }
+
+    private static int getAmountOfRightAnswers(ExamSession examSession) {
+        List<Answer> answers = Answer.getAnswersByExamSessionId(examSession.getId());
+        int counter = 0;
+        for (Answer answer : answers) {
+            if (answer.getChoice().isCorrect()) {
+                counter++;
+            }
+        }
+        return counter;
+    }
+
+    private static int getAllPossiblePoints(ExamSession examSession) {
+        List<Answer> answers = Answer.getAnswersByExamSessionId(examSession.getId());
+        int counter = 0;
+        for (Answer answer : answers) {
+                counter = counter + answer.getQuestion().getPoints();
+        }
+        return counter;
     }
 
     private static void collectAnswers(List<Question> questions, Scanner sc, ExamSession examSession) {
@@ -497,8 +521,8 @@ public class Main {
                     counter++;
                 }
             }
-            System.out.printf("Average total score of correct answers is %.2f out of 5\n",
-                    (float) (counter * 5) / answers.size());
+            System.out.printf("Average total score of correct answers is %.2f out of 10\n",
+                    (float) (counter * 10) / answers.size());
         }
     }
 
@@ -520,8 +544,8 @@ public class Main {
             if (totalAnswers == 0) {
                 System.out.printf("The exam %s has not yet been taken by any user\n", exam.getTitle());
             } else {
-                System.out.printf("Average score of correct answers for exam %s is %.2f out of 5\n", exam.getTitle(),
-                        (float) (counter * 5) / totalAnswers);
+                System.out.printf("Average score of correct answers for exam %s is %.5f out of 10\n", exam.getTitle(),
+                        (float) (counter * 10) / totalAnswers);
             }
         }
     }
