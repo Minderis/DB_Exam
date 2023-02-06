@@ -1,10 +1,5 @@
 import jakarta.persistence.*;
-import jakarta.persistence.criteria.CriteriaBuilder;
-import jakarta.persistence.criteria.CriteriaQuery;
-import jakarta.persistence.criteria.Root;
 import org.hibernate.Session;
-import org.hibernate.query.Query;
-
 import java.util.List;
 
 @Entity
@@ -29,22 +24,19 @@ public class User {
 
     public static int getUserIdByNameSurname(String name, String surname) {
         try (Session session = SessionFactoryMaker.getFactory().openSession()) {
-            CriteriaBuilder cb = session.getCriteriaBuilder();
-            CriteriaQuery<User> cr = cb.createQuery(User.class);
-            Root<User> root = cr.from(User.class);
-            cr.select(root).where(cb.and(
-                    cb.equal(root.get("name"), name),
-                    cb.equal(root.get("surname"), surname)));
-            Query<User> query = session.createQuery(cr);
-            List<User> results = query.getResultList();
-            if(results.size() > 0 && results.size() < 2) {
-                return results.get(0).getId();
-            } else {
-                System.out.printf("Found few users with same name and surname.");
-                System.out.println("Please login with different name.");
-            }
+            User user = session.createQuery("FROM User WHERE name = :name AND surname = :surname", User.class)
+                    .setParameter("name", name)
+                    .setParameter("surname", surname)
+                    .uniqueResult();
+            return user != null ? user.getId() : 0;
         }
-        return 0;
+    }
+
+
+    public static List<User> getAllUsers() {
+        try (Session session = SessionFactoryMaker.getFactory().openSession()) {
+            return session.createQuery("from User", User.class).list();
+        }
     }
 
     public int getId() {

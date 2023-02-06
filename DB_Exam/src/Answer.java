@@ -1,11 +1,6 @@
 import jakarta.persistence.*;
-import jakarta.persistence.criteria.CriteriaBuilder;
-import jakarta.persistence.criteria.CriteriaQuery;
-import jakarta.persistence.criteria.Root;
 import org.hibernate.Session;
 import org.hibernate.query.Query;
-
-import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -35,6 +30,8 @@ public class Answer {
         this.choice = choice;
     }
 
+
+
     public static List<Answer> getAnswersByExamSessionId(int id) {
         try (Session session = SessionFactoryMaker.getFactory().openSession()) {
             String hql = "FROM Answer a WHERE a.examSession.id = :examSessionId";
@@ -44,6 +41,11 @@ public class Answer {
         }
     }
 
+    public static List<Answer> getAllAnswers() {
+        try (Session session = SessionFactoryMaker.getFactory().openSession()) {
+            return session.createQuery("from Answer", Answer.class).list();
+        }
+    }
 
     public int getId() {
         return id;

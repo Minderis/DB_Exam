@@ -34,6 +34,13 @@ public class Exam {
             return query.uniqueResult();
         }
     }
+
+    public static List<Exam> getAllExams() {
+        try (Session session = SessionFactoryMaker.getFactory().openSession()) {
+            return session.createQuery("from Exam", Exam.class).list();
+        }
+    }
+
     public static Exam getExamById(int id) {
         try (Session session = SessionFactoryMaker.getFactory().openSession()) {
            return session.get(Exam.class, id);

@@ -1,12 +1,9 @@
 
-import jakarta.persistence.criteria.CriteriaBuilder;
-import jakarta.persistence.criteria.CriteriaQuery;
-import jakarta.persistence.criteria.Root;
 import org.hibernate.Session;
-
 import java.util.*;
 
 public class Main {
+    private static final String BAD_INPUT = "Bad input. Try again...";
     private static String name;
     private static String surname;
 
@@ -43,26 +40,20 @@ public class Main {
     }
 
     private static void checkAddUserToDatabase(String name, String surname) {
-        try (Session session = SessionFactoryMaker.getFactory().openSession()) {
-            CriteriaBuilder cb = session.getCriteriaBuilder();
-            CriteriaQuery<User> cr = cb.createQuery(User.class);
-            Root<User> root = cr.from(User.class);
-            cr.select(root).where(cb.and(
-                    cb.equal(root.get("name"), name),
-                    cb.equal(root.get("surname"), surname)));
-            User user = session.createQuery(cr).uniqueResult();
-            session.beginTransaction();
-            if (user == null) {
-                user = new User(name, surname);
+        int id = User.getUserIdByNameSurname(name, surname);
+        if (id == 0) {
+            User user = new User(name, surname);
+            try (Session session = SessionFactoryMaker.getFactory().openSession()) {
+                session.beginTransaction();
                 session.persist(user);
+                session.getTransaction().commit();
                 System.out.printf("Welcome %s %s\n", name, surname);
-            } else {
-                System.out.printf("Welcome back %s %s\n", name, surname);
             }
-            Main.name = name;
-            Main.surname = surname;
-            session.getTransaction().commit();
+        } else {
+            System.out.printf("Welcome back %s %s\n", name, surname);
         }
+        Main.name = name;
+        Main.surname = surname;
     }
 
 
@@ -84,18 +75,20 @@ public class Main {
             case "1" -> startExam(sc);
             case "2" -> createNewQuestionByExamId(sc);
             case "3" -> editQuestionById(sc);
-            case "4" -> showStatisticsMenu(sc);
+            case "4" -> chooseStatisticsMenu(sc);
             case "*" -> {
                 System.out.println("Bye!");
                 System.exit(0);
             }
-            default -> System.out.println("Bad input. Try again...");
+            default -> System.out.println(BAD_INPUT);
         }
     }
 
 
     private static void startExam(Scanner sc) {
-        Utils.loadTestData();
+        if (Exam.getAllExams().size() == 0) {
+            Utils.loadTestData();
+        }
         selectExamMenu(sc);
     }
 
@@ -108,14 +101,14 @@ public class Main {
                 for (Exam e : exams) {
                     System.out.printf("[%d] - %s\n", ++counter, e.getTitle());
                 }
-                System.out.printf("[*] - return to main menu\n", ++counter);
+                System.out.println("[*] - return to main menu");
                 int input = validateAndGetInt(sc);
                 if (input > 0 && input <= exams.size()) {
                     runExam(exams.get(input - 1).getTitle(), sc);
                 } else if (input == -1) {
                     runMenu = false;
                 } else {
-                    System.out.println("Bad input. Try again...");
+                    System.out.println(BAD_INPUT);
                 }
             }
         }
@@ -192,7 +185,7 @@ public class Main {
                     addAnswer(choices.get(2), examSession);
                     showMenu = false;
                 }
-                default -> System.out.println("Bad input. Try again....");
+                default -> System.out.println(BAD_INPUT);
             }
         }
     }
@@ -207,7 +200,7 @@ public class Main {
 
 
     private static void createNewQuestionByExamId(Scanner sc) {
-        int examId = getUserInputFromMenuToCreateNewQuestion(sc);
+        int examId = getUserInputFromMenu(sc, true);
         try (Session session = SessionFactoryMaker.getFactory().openSession()) {
             if (examId == 0) {
                 return;
@@ -218,26 +211,16 @@ public class Main {
         }
     }
 
-
-    private static int getUserInputFromMenuToCreateNewQuestion(Scanner sc) {
-        List<Exam> exams = getExams();
+    private static int getUserInputFromMenu(Scanner sc, boolean forCreation) {
+        List<Exam> exams = Exam.getAllExams();
         if (exams.isEmpty()) {
             return handleNoExams();
         } else {
-            printExamOptionsForQuestionCreate(exams);
+            printExamOptions(exams, forCreation);
             return handleUserSelection(sc, exams);
         }
     }
 
-    private static int getUserInputFromMenuToEditQuestion(Scanner sc) {
-        List<Exam> exams = getExams();
-        if (exams.isEmpty()) {
-            return handleNoExams();
-        } else {
-            printExamOptionsForQuestionEdit(exams);
-            return handleUserSelection(sc, exams);
-        }
-    }
 
     private static int handleNoExams() {
         System.out.println("There is no test data in system.");
@@ -245,24 +228,20 @@ public class Main {
         return 0;
     }
 
-    private static void printExamOptionsForQuestionCreate(List<Exam> exams) {
-        System.out.println("Pickup from list theme for your question or create new one theme:");
+    private static void printExamOptions(List<Exam> exams, boolean forCreation) {
+        System.out.println(forCreation ?
+                "Pickup from list theme for your question or create new one theme:" :
+                "Pickup from list theme to get list of questions:");
         int counter = 0;
         for (Exam e : exams) {
             System.out.printf("[%d] - %s\n", ++counter, e.getTitle());
         }
-        System.out.printf("[%d] - create new theme\n", ++counter);
+        if (forCreation) {
+            System.out.printf("[%d] - create new theme\n", ++counter);
+        }
         System.out.println("[*] - return to main menu");
     }
 
-    private static void printExamOptionsForQuestionEdit(List<Exam> exams) {
-        System.out.println("Pickup from list theme to get list of questions:");
-        int counter = 0;
-        for (Exam e : exams) {
-            System.out.printf("[%d] - %s\n", ++counter, e.getTitle());
-        }
-        System.out.println("[*] - return to main menu");
-    }
 
     private static int handleUserSelection(Scanner sc, List<Exam> exams) {
         boolean runMenu = true;
@@ -273,11 +252,16 @@ public class Main {
             } else if (input == exams.size() + 1) {
                 System.out.println("Enter new theme name:");
                 String themeName = sc.nextLine();
-                return createAndPersistNewExam(themeName).getId();
+                if (Exam.getExamByTitle(themeName) == null) {
+                    return createAndPersistNewExam(themeName).getId();
+                } else {
+                    System.out.println("Such theme already exist and will be used for question creation.");
+                    return Exam.getExamByTitle(themeName).getId();
+                }
             } else if (input == -1) {
                 return 0;
             } else {
-                System.out.println("Bad input. Try again...");
+                System.out.println(BAD_INPUT);
             }
         }
         return 0;
@@ -289,6 +273,8 @@ public class Main {
             session.getTransaction().begin();
             session.persist(exam);
             session.getTransaction().commit();
+        } catch (Exception e) {
+            System.out.println("Such theme name already exists.");
         }
         return exam;
     }
@@ -328,7 +314,7 @@ public class Main {
                     isNotInt = false;
                 }
             } catch (NumberFormatException e) {
-                System.out.println("Bad input. Try again...");
+                System.out.println(BAD_INPUT);
             }
         }
         return id;
@@ -362,14 +348,14 @@ public class Main {
             System.out.println("");
             return null;
         } else {
-            System.out.println("Bad input. Try again...");
+            System.out.println(BAD_INPUT);
             return handleYesNo(sc);
         }
     }
 
 
     private static void editQuestionById(Scanner sc) {
-        int examId = getUserInputFromMenuToEditQuestion(sc);
+        int examId = getUserInputFromMenu(sc, false);
         if (examId == 0) {
             return;
         }
@@ -390,12 +376,11 @@ public class Main {
         System.out.println("[*] - return to main menu");
         int input = validateAndGetInt(sc);
         if (input > 0 && input <= questions.size()) {
-            Question question = questions.get(input - 1);
-            return question;
+            return questions.get(input - 1);
         } else if (input == -1) {
             return null;
         } else {
-            System.out.println("Bad input. Try again...");
+            System.out.println(BAD_INPUT);
             return null;
         }
     }
@@ -407,43 +392,51 @@ public class Main {
         System.out.println("[2] - Delete");
         String chooseAction = sc.nextLine();
         switch (chooseAction) {
-            case "1" -> {
-                System.out.println("Change it? [Y/N]:");
-                String textForReplace = handleYesNo(sc);
-                if (textForReplace != null) {
-                    question.setQuestion(textForReplace);
-                }
-                ArrayList<Choice> newChoices = new ArrayList<>();
-                for (Choice choice : choices) {
-                    System.out.println("Choice: " + choice.getChoiceText());
-                    if (choice.isCorrect()) {
-                        System.out.println("This is correct answer for question.");
-                        System.out.println("If question is changed, replace it with correct answer for new question.");
-                    }
-                    System.out.println("Change it? [Y/N]:");
-                    String choiceForReplace = handleYesNo(sc);
-                    if (choiceForReplace != null) {
-                        choice.setChoiceText(choiceForReplace);
-                        newChoices.add(choice);
-                    }
-                }
-                try (Session session = SessionFactoryMaker.getFactory().openSession()) {
-                    session.getTransaction().begin();
-                    session.merge(question);
-                    for (Choice choice : newChoices) {
-                        session.merge(choice);
-                    }
-                    session.getTransaction().commit();
-                }
-                System.out.println("Question edited successfully!");
-            }
+            case "1" -> handleQuestionChange(question, choices, sc);
             case "2" -> deleteQuestion(question);
-            default -> System.out.println("Bad input. Try again...");
+            default -> System.out.println(BAD_INPUT);
         }
     }
 
-    private static void showStatisticsMenu(Scanner sc) {
-        chooseStatisticsMenu(sc);
+    private static void handleQuestionChange(Question question, List<Choice> choices, Scanner sc) {
+        boolean isAnyChangesMade = false;
+        String textForReplace = askForChange(question.getQuestion(), sc);
+        if (textForReplace != null) {
+            question.setQuestion(textForReplace);
+            isAnyChangesMade = true;
+        }
+        ArrayList<Choice> newChoices = new ArrayList<>();
+        for (Choice choice : choices) {
+            System.out.println("Choice: " + choice.getChoiceText());
+            if (choice.isCorrect()) {
+                System.out.println("This is correct answer for question.");
+                System.out.println("If question is changed, replace it with correct answer for new question.");
+            }
+            String choiceForReplace = askForChange(choice.getChoiceText(), sc);
+            if (choiceForReplace != null) {
+                choice.setChoiceText(choiceForReplace);
+                newChoices.add(choice);
+                isAnyChangesMade = true;
+            }
+        }
+        if (isAnyChangesMade) {
+            try (Session session = SessionFactoryMaker.getFactory().openSession()) {
+                session.getTransaction().begin();
+                session.merge(question);
+                for (Choice choice : newChoices) {
+                    session.merge(choice);
+                }
+                session.getTransaction().commit();
+            }
+            System.out.println("Question edited successfully!");
+        } else {
+            System.out.println("No changes was made! Question left unmodified.");
+        }
+    }
+
+    private static String askForChange(String text, Scanner sc) {
+        System.out.println("Change this: [" + text + "] ? [Y/N]:");
+        return handleYesNo(sc);
     }
 
     private static void printStatisticsMenu() {
@@ -470,52 +463,18 @@ public class Main {
                 case "4" -> countAverageScoreOfCorrectAnswersByExamId();
                 case "5" -> showChoicesStatistics();
                 case "*" -> showStatisticsMenu = false;
-                default -> System.out.println("Bad input. Try again...");
+                default -> System.out.println(BAD_INPUT);
             }
         }
     }
 
     private static void countAllTakenExams() {
-        System.out.printf("Totally was taken %d exam sessions\n", getExamSessions().size());
-    }
-
-    private static List<ExamSession> getExamSessions() {
-        try (Session session = SessionFactoryMaker.getFactory().openSession()) {
-            List<ExamSession> examSessions = session.createQuery("from ExamSession", ExamSession.class).list();
-            return examSessions;
-        }
-    }
-
-    private static List<User> getUsers() {
-        try (Session session = SessionFactoryMaker.getFactory().openSession()) {
-            List<User> users = session.createQuery("from User", User.class).list();
-            return users;
-        }
-    }
-
-    private static List<Answer> getAnswers() {
-        try (Session session = SessionFactoryMaker.getFactory().openSession()) {
-            List<Answer> answers = session.createQuery("from Answer", Answer.class).list();
-            return answers;
-        }
-    }
-
-    private static List<Question> getQuestions() {
-        try (Session session = SessionFactoryMaker.getFactory().openSession()) {
-            List<Question> questions = session.createQuery("from Question", Question.class).list();
-            return questions;
-        }
-    }
-
-    private static List<Exam> getExams() {
-        try (Session session = SessionFactoryMaker.getFactory().openSession()) {
-            return session.createQuery("from Exam", Exam.class).list();
-        }
+        System.out.printf("Totally was taken %d exam sessions\n", ExamSession.getAllExamSessions().size());
     }
 
     private static void countAllTakenExamsByUserId() {
-        List<User> users = getUsers();
-        List<ExamSession> examSessions = getExamSessions();
+        List<User> users = User.getAllUsers();
+        List<ExamSession> examSessions = ExamSession.getAllExamSessions();
         for (User u : users) {
             int counter = 0;
             for (ExamSession e : examSessions) {
@@ -523,12 +482,12 @@ public class Main {
                     counter++;
                 }
             }
-            System.out.printf("User %s %s totaly took %d exam sessions\n", u.getName(), u.getSurname(), counter);
+            System.out.printf("User %s %s totally took %d exam sessions\n", u.getName(), u.getSurname(), counter);
         }
     }
 
     private static void countAverageScoreOfCorrectAnswers() {
-        List<Answer> answers = getAnswers();
+        List<Answer> answers = Answer.getAllAnswers();
         if (answers.size() == 0) {
             System.out.println("Any exam has not yet been taken by any user");
         } else {
@@ -544,7 +503,7 @@ public class Main {
     }
 
     private static void countAverageScoreOfCorrectAnswersByExamId() {
-        List<Exam> exams = getExams();
+        List<Exam> exams = Exam.getAllExams();
         if (exams.size() == 0) {
             System.out.println("There is no any exams in the system. Load test data by entering exam menu.");
             return;
@@ -569,7 +528,7 @@ public class Main {
 
 
     private static void showChoicesStatistics() {
-        List<Question> questions = getQuestions();
+        List<Question> questions = Question.getAllQuestions();
         if (questions.size() == 0) {
             System.out.println("There is no any exams in the system. Load test data by entering exam menu.");
             return;

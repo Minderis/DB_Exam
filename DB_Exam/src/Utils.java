@@ -1,10 +1,12 @@
 import org.hibernate.Session;
-
 import java.util.ArrayList;
-import java.util.List;
 
 public class Utils {
     public static void loadTestData() {
+        ArrayList<User> users = new ArrayList<>();
+        users.add(new User("Arturas", "Minderis"));
+        users.add(new User("Darius", "Guginis"));
+        users.add(new User("Tomas", "Ramanauskas"));
         ArrayList<Exam> exams = new ArrayList<>();
         exams.add(new Exam("Geography: capital cities"));
         exams.add(new Exam("Math: sum of two numbers"));
@@ -93,6 +95,62 @@ public class Utils {
                 "emphasizes planning and design.", false));
         choices.add(new Choice(questions.get(14), "A waterfall approach to software development that " +
                 "emphasizes documentation and testing.", false));
+        ArrayList<ExamSession> examSessions = new ArrayList<>();
+        examSessions.add(new ExamSession(exams.get(0), users.get(0), 1));
+        examSessions.add(new ExamSession(exams.get(2), users.get(0),1));
+        examSessions.add(new ExamSession(exams.get(1), users.get(0),2));
+        examSessions.add(new ExamSession(exams.get(0), users.get(1), 2));
+        examSessions.add(new ExamSession(exams.get(2), users.get(1), 2));
+        examSessions.add(new ExamSession(exams.get(1), users.get(1),3));
+        examSessions.add(new ExamSession(exams.get(0), users.get(2),1));
+        examSessions.add(new ExamSession(exams.get(2), users.get(2),3));
+        examSessions.add(new ExamSession(exams.get(1), users.get(2),2));
+        ArrayList<Answer> answers = new ArrayList<>();
+        answers.add(new Answer(examSessions.get(0), questions.get(3), choices.get(11)));
+        answers.add(new Answer(examSessions.get(0), questions.get(0), choices.get(2)));
+        answers.add(new Answer(examSessions.get(0), questions.get(1), choices.get(4)));
+        answers.add(new Answer(examSessions.get(0), questions.get(2), choices.get(6)));
+        answers.add(new Answer(examSessions.get(0), questions.get(4), choices.get(14)));
+        answers.add(new Answer(examSessions.get(1), questions.get(10), choices.get(32)));
+        answers.add(new Answer(examSessions.get(1), questions.get(12), choices.get(36)));
+        answers.add(new Answer(examSessions.get(1), questions.get(13), choices.get(40)));
+        answers.add(new Answer(examSessions.get(1), questions.get(14), choices.get(44)));
+        answers.add(new Answer(examSessions.get(1), questions.get(11), choices.get(35)));
+        answers.add(new Answer(examSessions.get(2), questions.get(9), choices.get(27)));
+        answers.add(new Answer(examSessions.get(2), questions.get(8), choices.get(24)));
+        answers.add(new Answer(examSessions.get(2), questions.get(7), choices.get(22)));
+        answers.add(new Answer(examSessions.get(2), questions.get(5), choices.get(17)));
+        answers.add(new Answer(examSessions.get(2), questions.get(6), choices.get(19)));
+        answers.add(new Answer(examSessions.get(3), questions.get(1), choices.get(5)));
+        answers.add(new Answer(examSessions.get(3), questions.get(2), choices.get(6)));
+        answers.add(new Answer(examSessions.get(3), questions.get(3), choices.get(11)));
+        answers.add(new Answer(examSessions.get(3), questions.get(0), choices.get(0)));
+        answers.add(new Answer(examSessions.get(3), questions.get(4), choices.get(13)));
+        answers.add(new Answer(examSessions.get(4), questions.get(12), choices.get(37)));
+        answers.add(new Answer(examSessions.get(4), questions.get(14), choices.get(43)));
+        answers.add(new Answer(examSessions.get(4), questions.get(10), choices.get(30)));
+        answers.add(new Answer(examSessions.get(4), questions.get(11), choices.get(35)));
+        answers.add(new Answer(examSessions.get(4), questions.get(13), choices.get(39)));
+        answers.add(new Answer(examSessions.get(5), questions.get(5), choices.get(16)));
+        answers.add(new Answer(examSessions.get(5), questions.get(7), choices.get(22)));
+        answers.add(new Answer(examSessions.get(5), questions.get(6), choices.get(18)));
+        answers.add(new Answer(examSessions.get(5), questions.get(9), choices.get(27)));
+        answers.add(new Answer(examSessions.get(5), questions.get(8), choices.get(24)));
+        answers.add(new Answer(examSessions.get(6), questions.get(0), choices.get(1)));
+        answers.add(new Answer(examSessions.get(6), questions.get(1), choices.get(5)));
+        answers.add(new Answer(examSessions.get(6), questions.get(2), choices.get(8)));
+        answers.add(new Answer(examSessions.get(6), questions.get(4), choices.get(12)));
+        answers.add(new Answer(examSessions.get(6), questions.get(3), choices.get(11)));
+        answers.add(new Answer(examSessions.get(7), questions.get(14), choices.get(42)));
+        answers.add(new Answer(examSessions.get(7), questions.get(10), choices.get(30)));
+        answers.add(new Answer(examSessions.get(7), questions.get(13), choices.get(39)));
+        answers.add(new Answer(examSessions.get(7), questions.get(11), choices.get(35)));
+        answers.add(new Answer(examSessions.get(7), questions.get(12), choices.get(37)));
+        answers.add(new Answer(examSessions.get(8), questions.get(6), choices.get(19)));
+        answers.add(new Answer(examSessions.get(8), questions.get(7), choices.get(21)));
+        answers.add(new Answer(examSessions.get(8), questions.get(5), choices.get(17)));
+        answers.add(new Answer(examSessions.get(8), questions.get(8), choices.get(25)));
+        answers.add(new Answer(examSessions.get(8), questions.get(9), choices.get(27)));
 
         try (Session session = SessionFactoryMaker.getFactory().openSession()) {
             if (session.createQuery("from Question", Question.class).list().size() == 0 &&
@@ -108,8 +166,18 @@ public class Utils {
                 for (Choice choice : choices) {
                     session.persist(choice);
                 }
+                for (User user :users) {
+                    session.persist(user);
+                }
+                for (ExamSession examSession :examSessions) {
+                    session.persist(examSession);
+                }
+                for (Answer answer :answers) {
+                    session.persist(answer);
+                }
                 session.getTransaction().commit();
             }
+            System.out.println("Test data was loaded successfully!");
         }
     }
 }

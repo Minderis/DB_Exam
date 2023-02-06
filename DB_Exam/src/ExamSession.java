@@ -1,4 +1,5 @@
 import jakarta.persistence.*;
+import org.hibernate.Session;
 
 import java.util.List;
 
@@ -27,6 +28,18 @@ public class ExamSession {
     public ExamSession(Exam exam, User user) {
         this.exam = exam;
         this.user = user;
+    }
+
+    public ExamSession(Exam exam, User user, int score) {
+        this.exam = exam;
+        this.user = user;
+        this.score = score;
+    }
+
+    public static List<ExamSession> getAllExamSessions() {
+        try (Session session = SessionFactoryMaker.getFactory().openSession()) {
+            return session.createQuery("from ExamSession", ExamSession.class).list();
+        }
     }
 
     public int getId() {

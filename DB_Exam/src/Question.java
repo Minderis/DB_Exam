@@ -1,11 +1,6 @@
 import jakarta.persistence.*;
-import jakarta.persistence.criteria.CriteriaBuilder;
-import jakarta.persistence.criteria.CriteriaQuery;
-import jakarta.persistence.criteria.Root;
 import org.hibernate.Session;
 import org.hibernate.query.Query;
-
-import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -47,15 +42,9 @@ public class Question {
         }
     }
 
-    public static ArrayList<Question> getAllQuestions() {
+    public static List<Question> getAllQuestions() {
         try (Session session = SessionFactoryMaker.getFactory().openSession()) {
-            CriteriaBuilder cb = session.getCriteriaBuilder();
-            CriteriaQuery<Question> cr = cb.createQuery(Question.class);
-            Root<Question> root = cr.from(Question.class);
-            cr.select(root);
-            Query<Question> query = session.createQuery(cr);
-            List<Question> allResults = query.getResultList();
-            return (ArrayList<Question>) allResults;
+            return session.createQuery("from Question", Question.class).list();
         }
     }
 
